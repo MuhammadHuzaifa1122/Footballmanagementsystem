@@ -3,221 +3,172 @@
 #include <conio.h>
 #include <iomanip>
 #include <string>
+#include <limits>
+#include <cstdlib>  
+#include <ctime>    
+#include<fstream>
 using namespace std;
 
-// Color codes for console
 void setColor(int color) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
 }
 
-// Color definitions
-const int GREEN = 10;      // Headings & Borders
-const int CYAN = 11;       // Menu options
-const int YELLOW = 14;     // Important info
-const int RED = 12;        // Warnings & Errors
-const int WHITE = 15;      // Default text
-const int LIGHT_GREEN = 10; // Success messages
+const int GREEN = 10;
+const int CYAN = 11;
+const int YELLOW = 14;
+const int RED = 12;
+const int WHITE = 15;
+const int LIGHT_GREEN = 10;
+const int BRIGHT_YELLOW = 14;
+const int BRIGHT_CYAN = 11;
 
-// Shows the main heading with sub-heading
 void printMenuHeader(string mainMenu, string subMenu);
-// Prints the title of the system
 void printMenu();
-// Shows manager options and returns selected choice
 int printAdminOption();
-// Shows player options and returns selected choice
 int printPlayerOption();
-// Shows coach options and returns selected choice
 int printCoachOption();
-// Shows the options in the main menu
 int printOption1();
-// Displays a player's complete details in formatted form
 void viewDetails(string a, string b, int c, int d, int e, double f);
-// Shows fund status of a player (paid/notpaid)
 void status(string a, string b);
-// Clears screen and prints manager menu again
 void clearManager();
-// Clears screen and prints player menu again
 void clearPlayer();
-// Clears screen and prints coach menu again
 void clearCoach();
-// Calculate and distribute bonuses based on goals
 void distributeBonuses();
-// Display splash screen
 void displaySplashScreen();
+void displayStyledMenu();
+void showLoading();
 
-
-// ===================== GLOBAL ARRAYS =====================
 string name[30], position[30], fund[30], matchAgainst = " ", matchDate, tournament = " ";
-int i = 15, age[30], kit[30], match[30], goals[30];
+int i = 0, age[30], kit[30], match[30], goals[30];
 double salary[30], bonus[30];
 string opponent[20];
 int matchGoals[20][30];
 int totalMatches = 0;
 
 
+void save()
+{
+    fstream file;
+    file.open("players_count.txt",ios::out);
+    if(!file.is_open())
+    {
+        cout<<"Error opening file!"<<endl;
+        return;
+    }
+    file<<i<<endl;
+    
+
+}
+void read_i()
+{
+    fstream file;
+    file.open("players_count.txt",ios::in);
+    if(!file.is_open())
+    {
+        cout<<"Error opening file!"<<endl;
+        return;
+    }
+    file>>i;
+}
+void save_players(string playerName, string playerPosition,
+                  int playerAge, int playerKit,
+                  string fundStatus, double playerSalary, int playerGoals,int match)
+{
+    fstream file;
+    file.open("player_details.txt", ios::app);
+
+    if (!file.is_open())
+    {
+        cout << "Error opening file!" << endl;
+        return;
+    }
+
+    file << playerName << endl;
+    file << playerPosition << endl;
+    file << playerAge << endl;
+    file << playerKit << endl;
+    file << fundStatus << endl;
+    file << playerSalary << endl;
+    file << playerGoals << endl;
+    file << match<<endl;
+
+    file.close();
+}
+
+void load_players()
+{
+    fstream file("player_details.txt", ios::in);
+    if (!file.is_open())
+    {
+        cout << "Error opening file!" << endl;
+        return;
+    }
+
+    i = 0;   
+
+    while (getline(file, name[i]))
+    {
+        getline(file, position[i]);
+        file >> age[i];
+        file >> kit[i];
+        file >> fund[i];
+        file >> salary[i];
+        file >> goals[i];
+        file >> match[i];
+        file.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        i++;
+    }
+
+    file.close();
+    save();  
+}
+
+void rewrite_players_file()
+{
+    fstream file("player_details.txt", ios::out);
+
+    for (int k = 0; k < i; k++)
+    {
+        file << name[k] << endl;
+        file << position[k] << endl;
+        file << age[k] << endl;
+        file << kit[k] << endl;
+        file << fund[k] << endl;
+        file << salary[k] << endl;
+        file << goals[k] << endl;
+        file << match[k] << endl;
+    }
+    file.close();
+}
 
 int main()
 {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
+    for (int j = 0; j < 30; j++)
+{
+    name[j] = " ";
+    position[j] = " ";
+    fund[j] = " ";
+    age[j] = kit[j] = match[j] = goals[j] = 0;
+    salary[j] = bonus[j] = 0;
+}
+
+    load_players();
 
     displaySplashScreen();
 
-    // Goalkeepers
-    name[0] = "Gianluigi Donnarumma";
-    position[0] = "GK";
-    age[0] = 25;
-    kit[0] = 1;
-    match[0] = 42;
-    fund[0] = "paid";
-    salary[0] = 32000;
-    goals[0] = 0;
-
-    // Defenders
-    name[1] = "Sergio Ramos";
-    position[1] = "DEF";
-    age[1] = 37;
-    kit[1] = 4;
-    match[1] = 45;
-    fund[1] = "paid";
-    salary[1] = 40000;
-    goals[1] = 8;
-
-    name[2] = "Virgil van Dijk";
-    position[2] = "DEF";
-    age[2] = 31;
-    kit[2] = 4;
-    match[2] = 43;
-    fund[2] = "paid";
-    salary[2] = 42000;
-    goals[2] = 5;
-
-    name[3] = "Thiago Silva";
-    position[3] = "DEF";
-    age[3] = 38;
-    kit[3] = 6;
-    match[3] = 40;
-    fund[3] = "paid";
-    salary[3] = 38000;
-    goals[3] = 6;
-
-    name[4] = "Reece James";
-    position[4] = "DEF";
-    age[4] = 23;
-    kit[4] = 24;
-    match[4] = 35;
-    fund[4] = "paid";
-    salary[4] = 35000;
-    goals[4] = 4;
-
-    name[5] = "Achraf Hakimi";
-    position[5] = "DEF";
-    age[5] = 24;
-    kit[5] = 2;
-    match[5] = 38;
-    fund[5] = "paid";
-    salary[5] = 36000;
-    goals[5] = 3;
-
-    // Midfielders
-    name[6] = "Luka Modric";
-    position[6] = "MID";
-    age[6] = 38;
-    kit[6] = 10;
-    match[6] = 47;
-    fund[6] = "paid";
-    salary[6] = 36000;
-    goals[6] = 8;
-
-    name[7] = "Kevin De Bruyne";
-    position[7] = "MID";
-    age[7] = 32;
-    kit[7] = 17;
-    match[7] = 40;
-    fund[7] = "notpaid";
-    salary[7] = 38000;
-    goals[7] = 15;
-
-    name[8] = "Bruno Fernandes";
-    position[8] = "MID";
-    age[8] = 29;
-    kit[8] = 8;
-    match[8] = 33;
-    fund[8] = "paid";
-    salary[8] = 34000;
-    goals[8] = 18;
-
-    name[9] = "Jude Bellingham";
-    position[9] = "MID";
-    age[9] = 20;
-    kit[9] = 5;
-    match[9] = 18;
-    fund[9] = "paid";
-    salary[9] = 32000;
-    goals[9] = 12;
-
-    name[10] = "Phil Foden";
-    position[10] = "MID";
-    age[10] = 23;
-    kit[10] = 47;
-    match[10] = 22;
-    fund[10] = "paid";
-    salary[10] = 30000;
-    goals[10] = 14;
-
-    // Attackers
-    name[11] = "Cristiano Ronaldo";
-    position[11] = "ATK";
-    age[11] = 38;
-    kit[11] = 7;
-    match[11] = 45;
-    fund[11] = "paid";
-    salary[11] = 50000;
-    goals[11] = 38;
-
-    name[12] = "Lionel Messi";
-    position[12] = "ATK";
-    age[12] = 36;
-    kit[12] = 10;
-    match[12] = 42;
-    fund[12] = "paid";
-    salary[12] = 48000;
-    goals[12] = 35;
-
-    name[13] = "Erling Haaland";
-    position[13] = "ATK";
-    age[13] = 23;
-    kit[13] = 9;
-    match[13] = 28;
-    fund[13] = "paid";
-    salary[13] = 40000;
-    goals[13] = 30;
-
-    name[14] = "Kylian Mbappe";
-    position[14] = "ATK";
-    age[14] = 25;
-    kit[14] = 9;
-    match[14] = 35;
-    fund[14] = "paid";
-    salary[14] = 42000;
-    goals[14] = 32;
-
-    for (int x = 15; x < 30; x++)
-    {
-        name[x] = " ";
-        position[x] = " ";
-        fund[x] = " ";
-        salary[x] = 0.0;
-        goals[x] = 0;
-        bonus[x] = 0.0;
-    }
+   
+    
 
     while (true)
     {
-        printMenu();
-        printMenuHeader("Main Menu", "");
+        system("cls");
+        displayStyledMenu();
         int option = printOption1();
         system("cls");
+        
         if (option == 1)
         {
             printMenu();
@@ -234,6 +185,7 @@ int main()
                     cout << "Enter Player name: ";
                     setColor(WHITE);
                     getline(cin, name[i]);
+                    
 
                     setColor(YELLOW);
                     cout << "Enter Player position (GK/DEF/MID/ATK): ";
@@ -285,7 +237,9 @@ int main()
                     cout << "Player fund status(paid/notpaid): ";
                     setColor(WHITE);
                     getline(cin, fund[i]);
+                    save_players(name[i],position[i],age[i],kit[i],fund[i],salary[i],goals[i],match[i]);
                     i += 1;
+                    save();
                 }
                 else if (option1 == 2)
                 {
@@ -296,7 +250,7 @@ int main()
                     cout << "Next Match against: ";
                     setColor(WHITE);
                     getline(cin, opponent[totalMatches]);
-
+                    matchAgainst = opponent[totalMatches];
                     setColor(YELLOW);
                     cout << "Match Date: ";
                     setColor(WHITE);
@@ -316,13 +270,13 @@ int main()
                     getline(cin, tournament);
                 }
                 else if (option1 == 4)
-                {
+                {   
                     clearManager();
                     setColor(GREEN);
                     cout << left << setw(20) << "Player Name" << setw(10) << "Position" << setw(10) << "Age" << setw(12) << "Matches" << setw(15) << "Salary" << endl;
                     cout << "---------------------------------------------------------------" << endl;
                     setColor(WHITE);
-                    for (int j = 0; j < 30; j++)
+                    for (int j = 0; j < i; j++)
                     {
                         if (name[j] != " ")
                         {
@@ -383,6 +337,7 @@ int main()
                             kit[i] = newKit;
                             setColor(LIGHT_GREEN);
                             cout << "Jersey Number updated successfully!" << endl;
+                            rewrite_players_file();
                             setColor(WHITE);
                             found = true;
                             break;
@@ -438,11 +393,11 @@ int main()
                     cin.ignore();
                     getline(cin, searchName);
                     bool found = false;
-                    for (int i = 0; i < 30; i++)
+                    for (int k = 0; k < 30; k++)
                     {
-                        if (name[i] == searchName)
+                        if (name[k] == searchName)
                         {
-                            for (int j = i; j < 29; j++)
+                            for (int j = k; j < 29; j++)
                             {
                                 name[j] = name[j + 1];
                                 position[j] = position[j + 1];
@@ -456,6 +411,9 @@ int main()
                             }
 
                             setColor(LIGHT_GREEN);
+                            i--;
+                            save();
+                            rewrite_players_file();
                             cout << "Player deleted successfully!" << endl;
                             setColor(WHITE);
                             found = true;
@@ -475,7 +433,7 @@ int main()
 
                     int currentMatch = totalMatches;
 
-                    if (opponent[currentMatch] == " ")
+                    if (matchAgainst == " ")
                     {
                         setColor(YELLOW);
                         cout << "Enter opponent team for this match: ";
@@ -484,7 +442,7 @@ int main()
                         getline(cin, opponent[currentMatch]);
                     }
 
-                    for (int j = 0; j < 30; j++)
+                    for (int j = 0; j < i; j++)
                     {
                         if (name[j] != " ")
                         {
@@ -495,12 +453,12 @@ int main()
                             cin >> g;
                             matchGoals[currentMatch][j] = g;
                             goals[j] += g;
+                            match[j]++;
                         }
                     }
 
                     totalMatches++;
 
-                    // Auto distribute bonuses after match
                     clearManager();
                     setColor(YELLOW);
                     cout << "=== AUTOMATIC BONUS DISTRIBUTION ===" << endl;
@@ -537,11 +495,13 @@ int main()
                                 setColor(CYAN);
                                 cout << left << setw(25) << name[j] << setw(10) << position[j] << setw(10) << matchGoalsScored
                                      << setw(15) << "$" << fixed << setprecision(0) << newBonus << endl;
+                                     
                                 setColor(WHITE);
                             }
                         }
                     }
                     setColor(LIGHT_GREEN);
+                    rewrite_players_file();
                     cout << "\n=== Bonuses awarded automatically ===" << endl;
                     setColor(WHITE);
                 }
@@ -961,12 +921,10 @@ int main()
                     cout << "\n=== SELECTED TEAM ===" << endl;
                     setColor(WHITE);
 
-                    // Arrays for storing players of each position
                     string gkNames[5], defNames[20], midNames[20], atkNames[20];
                     int gkIndices[5], defIndices[20], midIndices[20], atkIndices[20];
                     int gkCount = 0, defCount = 0, midCount = 0, atkCount = 0;
 
-                    // Separate players by position
                     for (int j = 0; j < 30; j++)
                     {
                         if (name[j] != " ")
@@ -998,7 +956,6 @@ int main()
                         }
                     }
 
-                    // Select GK (1) - First available GK
                     setColor(LIGHT_GREEN);
                     cout << "\n--- GOALKEEPERS (1) ---" << endl;
                     setColor(WHITE);
@@ -1009,7 +966,6 @@ int main()
                         setColor(WHITE);
                     }
 
-                    // Select DEF (4) - Top 4 by matches
                     setColor(LIGHT_GREEN);
                     cout << "\n--- DEFENDERS (4) ---" << endl;
                     setColor(WHITE);
@@ -1034,7 +990,6 @@ int main()
                         setColor(WHITE);
                     }
 
-                    // Select MID (3) - Top 3 by goals
                     setColor(LIGHT_GREEN);
                     cout << "\n--- MIDFIELDERS (3) ---" << endl;
                     setColor(WHITE);
@@ -1059,7 +1014,6 @@ int main()
                         setColor(WHITE);
                     }
 
-                    // Select ATK (3) - Top 3 by goals
                     setColor(LIGHT_GREEN);
                     cout << "\n--- ATTACKERS (3) ---" << endl;
                     setColor(WHITE);
@@ -1124,6 +1078,7 @@ int main()
             setColor(WHITE);
         }
     }
+    return 0;
 }
 
 void printMenu()
@@ -1241,28 +1196,93 @@ void displaySplashScreen()
 {
     system("cls");
     setColor(YELLOW);
-    cout << "\n\n\n";
-    cout << "    ╔═══════════════════════════════════════════════════════════╗\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ║          *** UET TITANS FOOTBALL CLUB ***                 ║\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ║              Football Management System                   ║\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ║               Welcome to the System                       ║\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ║                                                           ║\n";
-    cout << "    ╚═══════════════════════════════════════════════════════════╝\n";
-    cout << "\n\n";
-    setColor(WHITE);
-    
-    Sleep(3000);
+    cout << "    ╔═════════════════════════════════════════════════════════════════════════════════════════╗\n";
+    cout << "    ║                                                                                         ║\n";
+    setColor(CYAN);
+    cout << "    ║             __        __   _                            _                               ║\n";
+    cout << "    ║             \\ \\      / /__| | ___ ___  _ __ ___   ___  | |_ ___                         ║\n";
+    cout << "    ║              \\ \\ /\\ / / _ \\ |/ __/ _ \\| '_ ` _ \\ / _ \\ | __/ _ \\                        ║\n";
+    cout << "    ║               \\ V  V /  __/ | (_| (_) | | | | | |  __/ | || (_) |                       ║\n";
+    cout << "    ║                \\_/\\_/ \\___|_|\\___\\___/|_| |_| |_|\\___|  \\__\\___/                        ║\n";
+
+    setColor(YELLOW);
+    cout << "    ║                                                                                         ║\n";
+    cout << "    ║                        *** UET TITANS FOOTBALL CLUB ***                                 ║\n";
+    cout << "    ║                                                                                         ║\n";
+    cout << "    ║                                                                                         ║\n";
+    cout << "    ║                                                                                         ║\n";
+    cout << "    ║                       Elite Training • Champions Mindset                                ║\n";
+    cout << "    ║                                                                                         ║\n";
+    cout << "    ╚═════════════════════════════════════════════════════════════════════════════════════════╝\n";
+    showLoading();
+     cout << "    Program is now starting...\n";
+    Sleep(600);
     system("cls");
 }
+void showLoading() {
+    setColor(CYAN); 
+    srand(time(0));
+    cout << "\n                                 Loading";
+    for (int i = 0; i < 10; i++) {
+        int color = rand() % 15 + 1;
+        setColor(color);
+        cout << ".";
+        Sleep(300); 
+    }
+    cout << "\n\n";
+    setColor(WHITE); 
+}
+void displayStyledMenu()
+{
+    setColor(BRIGHT_CYAN);
+    cout << "\n";
+    cout << "  ╔════════════════════════════════════════════════════════════════════╗\n";
+    cout << "  ║                                                                    ║\n";
+    cout << "  ║                  FOOTBALL MANAGEMENT SYSTEM                        ║\n";
+    cout << "  ║                                                                    ║\n";
+    cout << "  ║                    UET TITANS FOOTBALL CLUB                        ║\n";
+    cout << "  ║                                                                    ║\n";
+    cout << "  ╠════════════════════════════════════════════════════════════════════╣\n";
+    cout << "  ║                                                                    ║\n";
+    cout << "  ║                      SELECT YOUR ROLE                              ║\n";
+    cout << "  ║                                                                    ║\n";
+    cout << "  ║   ┌─────────────────────────────────────────────────────────────┐  ║\n";
+    cout << "  ║   │                                                             │  ║\n";
+    setColor(BRIGHT_YELLOW);
+    cout << "  ║   │    1.    MANAGER - Manage Players, Matches & Tournament     │  ║\n";
+    setColor(BRIGHT_CYAN);
+    cout << "  ║   │                                                             │  ║\n";
+    cout << "  ║   │    ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄       │  ║\n";
+    cout << "  ║   │                                                             │  ║\n";
+    setColor(BRIGHT_YELLOW);
+    cout << "  ║   │    2.   PLAYER - View Profile, Stats & Performance          │  ║\n";
+    setColor(BRIGHT_CYAN);
+    cout << "  ║   │                                                             │  ║\n";
+    cout << "  ║   │    ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄       │  ║\n";
+    cout << "  ║   │                                                             │  ║\n";
+    setColor(BRIGHT_YELLOW);
+    cout << "  ║   │    3.    COACH - Generate Team Selection and Formation      │  ║\n";
+    setColor(BRIGHT_CYAN);
+    cout << "  ║   │                                                             │  ║\n";
+    cout << "  ║   │    ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄       │  ║\n";
+    cout << "  ║   │                                                             │  ║\n";
+    setColor(BRIGHT_YELLOW);
+    cout << "  ║   │    4.    EXIT - Quit the Application                        │  ║\n";
+    setColor(BRIGHT_CYAN);
+    cout << "  ║   │                                                             │  ║\n";
+    cout << "  ║   └─────────────────────────────────────────────────────────────┘  ║\n";
+    cout << "  ║                                                                    ║\n";
+    cout << "  ╠════════════════════════════════════════════════════════════════════╣\n";
+    cout << "  ║                                                                    ║\n";
+    setColor(BRIGHT_YELLOW);
+    cout << "  ║         Enter Your Choice (1-4):                                   ║\n";
+    setColor(BRIGHT_CYAN);
+    cout << "  ║                                                                    ║\n";
+    cout << "  ╚════════════════════════════════════════════════════════════════════╝\n";
+    cout << "\n";
+    setColor(WHITE);
+}
+
 void clearManager()
 {
     system("cls");
